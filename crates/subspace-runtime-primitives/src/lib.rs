@@ -2,6 +2,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod codec_primitives;
 pub mod extensions;
 pub mod utility;
 
