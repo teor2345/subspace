@@ -73,9 +73,15 @@ where
 
     let runtime_id = runtime_api
         .runtime_id(consensus_block_hash, domain_id)?
-        .ok_or(sp_blockchain::Error::Application(Box::from(format!(
-            "No RuntimeId found for {domain_id:?}"
-        ))))?;
+        .ok_or_else(|| {
+            sp_blockchain::Error::Application(Box::from(format!(
+                "No RuntimeId found for {domain_id:?} in {}\n\
+                Backtrace:\n\
+                {:?}",
+                std::any::type_name_of_val(&is_runtime_upgraded::<CClient, CBlock, Block>),
+                std::backtrace::Backtrace::force_capture(),
+            )))
+        })?;
 
     // The runtime_upgrades() API is only present in API versions 2 and later. On earlier versions,
     // we need to call legacy code.

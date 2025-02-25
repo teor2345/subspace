@@ -446,9 +446,15 @@ where
             .consensus_client
             .runtime_api()
             .runtime_id(at, domain_id)?
-            .ok_or(sp_blockchain::Error::Application(Box::from(format!(
-                "No RuntimeId found for {domain_id:?}"
-            ))))?;
+            .ok_or_else(|| {
+                sp_blockchain::Error::Application(Box::from(format!(
+                    "No RuntimeId found for {domain_id:?} in {}\n\
+                    Backtrace:\n\
+                    {:?}",
+                    std::any::type_name_of_val(&Self::is_domain_runtime_upgraded_at),
+                    std::backtrace::Backtrace::force_capture(),
+                )))
+            })?;
         // This API is only present in API versions 2 and later, but it is safe to call
         // unconditionally, because:
         // - on Mainnet, there are no domains yet, and
