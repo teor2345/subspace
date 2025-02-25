@@ -814,6 +814,7 @@ mod benchmarks {
 
         let domain_owner = DomainRegistry::<T>::get(domain_id)
             .expect("domain object must exist")
+            .current
             .owner_account_id;
         let new_allow_list = OperatorAllowList::Operators(BTreeSet::from_iter(vec![account(
             "allowed-account",

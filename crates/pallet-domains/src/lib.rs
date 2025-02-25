@@ -173,6 +173,7 @@ mod pallet {
         do_instantiate_domain, do_update_domain_allow_list, DomainConfigParams, DomainObject,
         Error as DomainRegistryError,
     };
+    use crate::migration_v2_to_v3::DomainObjectV2;
     use crate::runtime_registry::{
         do_register_runtime, do_schedule_runtime_upgrade, do_upgrade_runtimes,
         register_runtime_at_genesis, DomainRuntimeUpgradeEntry, Error as RuntimeRegistryError,
@@ -237,6 +238,7 @@ mod pallet {
     use sp_std::fmt::Debug;
     use sp_subspace_mmr::MmrProofVerifier;
     use subspace_core_primitives::{Randomness, U256};
+    use subspace_runtime_primitives::codec_primitives::DecodeFallback;
     use subspace_runtime_primitives::StorageFee;
 
     #[pallet::config]
@@ -572,7 +574,11 @@ mod pallet {
         _,
         Identity,
         DomainId,
-        DomainObject<BlockNumberFor<T>, ReceiptHashFor<T>, T::AccountId, BalanceOf<T>>,
+        // TODO: remove this fallback once the V3 migration has been applied to Taurus and Mainnet
+        DecodeFallback<
+            DomainObject<BlockNumberFor<T>, ReceiptHashFor<T>, T::AccountId, BalanceOf<T>>,
+            DomainObjectV2<BlockNumberFor<T>, ReceiptHashFor<T>, T::AccountId, BalanceOf<T>>,
+        >,
         OptionQuery,
     >;
 
@@ -2166,9 +2172,9 @@ impl<T: Config> Pallet<T> {
         let raw_genesis = into_complete_raw_genesis::<T>(
             runtime_object,
             domain_id,
-            &domain_obj.domain_runtime_info,
+            &domain_obj.current.domain_runtime_info,
             total_issuance,
-            domain_obj.domain_config.initial_balances,
+            domain_obj.current.domain_config.initial_balances,
         )
         .ok()?;
         Some((
@@ -2176,7 +2182,7 @@ impl<T: Config> Pallet<T> {
                 runtime_type,
                 raw_genesis,
             },
-            domain_obj.created_at,
+            domain_obj.current.created_at,
         ))
     }
 
@@ -2392,17 +2398,17 @@ impl<T: Config> Pallet<T> {
             BundleError::UnexpectedReceiptGap,
         );
 
-        let domain_config = DomainRegistry::<T>::get(domain_id)
+        let domain_config = &DomainRegistry::<T>::get(domain_id)
             .ok_or(BundleError::InvalidDomainId)?
             .domain_config;
 
-        Self::validate_bundle(opaque_bundle, &domain_config)?;
+        Self::validate_bundle(opaque_bundle, domain_config)?;
 
         Self::validate_eligibility(
             sealed_header.pre_hash().as_ref(),
             &sealed_header.signature,
             &sealed_header.header.proof_of_election,
-            &domain_config,
+            domain_config,
             pre_dispatch,
         )?;
 
@@ -2430,6 +2436,7 @@ impl<T: Config> Pallet<T> {
 
         let domain_config = DomainRegistry::<T>::get(domain_id)
             .ok_or(BundleError::InvalidDomainId)?
+            .current
             .domain_config;
         Self::validate_eligibility(
             sealed_singleton_receipt.pre_hash().as_ref(),
@@ -2772,7 +2779,7 @@ impl<T: Config> Pallet<T> {
     ) -> Result<Option<DomainBundleLimit>, DomainRegistryError> {
         let domain_config = match DomainRegistry::<T>::get(domain_id) {
             None => return Ok(None),
-            Some(domain_obj) => domain_obj.domain_config,
+            Some(domain_obj) => domain_obj.current.domain_config,
         };
 
         Ok(Some(DomainBundleLimit {

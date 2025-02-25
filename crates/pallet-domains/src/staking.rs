@@ -1465,7 +1465,7 @@ pub(crate) mod tests {
                 domain_instantiation_deposit: Default::default(),
             };
 
-            DomainRegistry::<Test>::insert(domain_id, domain_obj);
+            DomainRegistry::<Test>::set(domain_id, Some(domain_obj.into()));
         }
 
         if !DomainStakingSummary::<Test>::contains_key(domain_id) {
@@ -1828,7 +1828,7 @@ pub(crate) mod tests {
                 domain_instantiation_deposit: Default::default(),
             };
 
-            DomainRegistry::<Test>::insert(new_domain_id, domain_obj);
+            DomainRegistry::<Test>::set(new_domain_id, Some(domain_obj.into()));
             DomainStakingSummary::<Test>::insert(
                 new_domain_id,
                 StakingSummary {

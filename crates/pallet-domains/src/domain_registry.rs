@@ -329,7 +329,7 @@ pub(crate) fn do_instantiate_domain<T: Config>(
         domain_runtime_info,
         domain_instantiation_deposit,
     };
-    DomainRegistry::<T>::insert(domain_id, domain_obj);
+    DomainRegistry::<T>::set(domain_id, Some(domain_obj.into()));
 
     let next_domain_id = domain_id.checked_add(&1.into()).ok_or(Error::MaxDomainId)?;
     NextDomainId::<T>::set(next_domain_id);

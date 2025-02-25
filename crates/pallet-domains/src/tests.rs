@@ -644,7 +644,7 @@ fn test_bundle_format_verification() {
             domain_runtime_info: Default::default(),
             domain_instantiation_deposit: Default::default(),
         };
-        DomainRegistry::<Test>::insert(domain_id, domain_obj);
+        DomainRegistry::<Test>::set(domain_id, Some(domain_obj.into()));
 
         let mut valid_bundle = create_dummy_bundle(DOMAIN_ID, 0, System::parent_hash());
         valid_bundle.extrinsics.push(opaque_extrinsic(1, 1));
