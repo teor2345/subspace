@@ -1039,8 +1039,9 @@ pub type Executive = frame_executive::Executive<
     (
         // TODO: remove once migration has been deployed to Taurus and Mainnet
         pallet_messenger::migrations::VersionCheckedMigrateDomainsV0ToV1<Runtime>,
+        // TODO: run in the next upgrade, after a runtime with a DecodeFallback to the previous domain registry type has been fully deployed
         // TODO: remove once migration has been deployed to Taurus
-        pallet_domains::migration_v2_to_v3::VersionCheckedMigrateDomainsV2ToV3<Runtime>,
+        //pallet_domains::migration_v2_to_v3::VersionCheckedMigrateDomainsV2ToV3<Runtime>,
     ),
 >;
 
